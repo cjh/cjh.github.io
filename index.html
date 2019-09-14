@@ -1,10 +1,127 @@
 <!doctype html>
 <html>
   <head>
-    <title>Hello World</title>
+    <title>&lrm;</title>
+    <style>
+			html, body, div, span, applet, object, iframe,
+			h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+			a, abbr, acronym, address, big, cite, code,
+			del, dfn, em, img, ins, kbd, q, s, samp,
+			small, strike, strong, sub, sup, tt, var,
+			b, u, i, center,
+			dl, dt, dd, ol, ul, li,
+			fieldset, form, label, legend,
+			table, caption, tbody, tfoot, thead, tr, th, td,
+			article, aside, canvas, details, embed, 
+			figure, figcaption, footer, header, hgroup, 
+			menu, nav, output, ruby, section, summary,
+			time, mark, audio, video {
+				margin: 0;
+				padding: 0;
+				border: 0;
+				font-size: 100%;
+				font: inherit;
+				vertical-align: baseline;
+			}
+			article, aside, details, figcaption, figure, 
+			footer, header, hgroup, menu, nav, section {
+				display: block;
+			}
+			body {
+				line-height: 1;
+			}
+			ol, ul {
+				list-style: none;
+			}
+			blockquote, q {
+				quotes: none;
+			}
+			blockquote:before, blockquote:after,
+			q:before, q:after {
+				content: '';
+				content: none;
+			}
+			table {
+				border-collapse: collapse;
+				border-spacing: 0;
+			}
+      canvas {
+        vertical-align: top;
+        background: aliceblue;
+      }
+    </style>
+    <link rel="icon" href="favicon.ico">
+    <link rel="icon" type="image/png" href="favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="favicon-32x32.png" sizes="32x32">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
   </head>
   <body>
-    Hello World
+    <canvas></canvas>
+    <script type="text/javascript">
+      var $canvas = $("canvas")[0];
+      var bubbles = 10;
+      var init = '';
+      var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+
+      $(function() {
+        resize();
+        draw();
+
+        $(window).resize(resize);
+      });
+
+      var iterations = 0;
+      function draw() {
+        if (iterations >= 100) {
+          ctx = null;
+          return;
+        }
+        setTimeout(function () {
+          iterations++;
+          var ctx = $canvas.getContext("2d");
+          ctx.fillStyle = ["#fc78b7", "#fd9bca", "#ffffff",
+            "#74f6e8", "#9387f7"][random(0, 5)];
+          if(random(0, 100) > 75) {
+            ctx.globalCompositeOperation = "screen";
+          } else {
+            ctx.globalCompositeOperation = "multiply";
+          }
+          ctx.beginPath();
+          var cx = width * random(0, 100) / 100;
+          var cy = height * random(0, 100) / 100;
+          var size = random(10, width/20);
+          ctx.arc(cx, cy, size, 0, Math.PI*2, true);
+          ctx.closePath();
+          ctx.fill();
+          init = requestAnimationFrame(draw);
+        }, Math.max(0, iterations /2.5));
+      }
+
+
+
+      function random(min, max) {
+        var range = max - min;
+        var random = (Math.random() * range) + min;
+        var round = Math.floor(random);
+
+        return round;
+      }
+
+
+      function resize() {
+        cancelAnimationFrame(init);
+
+        width = $(window).width();
+        height = $(window).height();
+
+        $("canvas").attr({
+          "width" : width,
+          "height" : height
+        });
+
+        draw();
+      }
+    </script>
   </body>
 </html>
 
