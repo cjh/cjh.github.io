@@ -7,7 +7,7 @@ const CTX3 = CANVAS3.getContext('2d');
 const NUM_COLORS = 5;
 const NUM_DANDELIONS = 32;
 
-let WIDTH, HEIGHT;
+let WIDTH, HEIGHT, MAX_SIDE;
 let colors, maxSize, pilotx, piloty, startTime, maxDelay = 0, frames = [];
 CTX1.globalCompositeOperation = 'multiply';
 CTX2.globalCompositeOperation = 'multiply';
@@ -31,18 +31,19 @@ function init() {
     }
     WIDTH = window.innerWidth;
     HEIGHT = window.innerHeight;
-    CANVAS1.width = WIDTH;
-    CANVAS1.height = HEIGHT;
-    CANVAS2.width = WIDTH;
-    CANVAS2.height = HEIGHT;
-    CANVAS3.width = WIDTH;
-    CANVAS3.height = HEIGHT;
+    MAX_SIDE = Math.max(WIDTH, HEIGHT);
+    CANVAS1.width = MAX_SIDE;
+    CANVAS1.height = MAX_SIDE;
+    CANVAS2.width = MAX_SIDE;
+    CANVAS2.height = MAX_SIDE;
+    CANVAS3.width = MAX_SIDE;
+    CANVAS3.height = MAX_SIDE;
     maxDelay = 0;
     maxSize = Math.min(WIDTH, HEIGHT) / 6;
     colors = generateRandomColors(NUM_COLORS);
     clearAll();
     dandelions = [];
-    freshDandelion('#fa3f32', 1300);
+    freshDandelion('#fa4437', 1300);
     pilotx = random(maxSize / 2, WIDTH - maxSize / 2);
     piloty = random(maxSize / 2, HEIGHT - maxSize / 2);
     dandelions[0].x = pilotx;
@@ -51,6 +52,9 @@ function init() {
     while (dandelions.length < NUM_DANDELIONS) {
         freshDandelion();
     }
+
+    shuffle(dandelions);
+
     startTime = new Date();
     requestAnimationFrame(draw);
 }
@@ -62,14 +66,14 @@ function drawDandy(d, context, x, y) {
     rgb = 'rgba(' + rgb.join(',') + ')';
     console.log(rgb);
     context.strokeStyle = rgb;
-    context.shadowBlur = 5;
+    context.shadowBlur = 2;
     context.shadowColor = d.color;
     context.beginPath();
     for (i = 0; i < d.path.length; i++) {
         context.lineTo(x + d.path[i][0], y + d.path[i][1]);
     }
     context.moveTo(x, y);
-    context.lineTo(x, HEIGHT * 2);
+    context.lineTo(x, MAX_SIDE);
     context.stroke();
     context.closePath();
 }
@@ -105,11 +109,11 @@ function freshDandelion(color = null, delay = null) {
         delay: delay,
         ctx: null
     }
-    dandelion.ctx = dandelion.blurFactor == 1 ?
-        CTX3 : dandelion.blurFactor == 2 ? CTX2 : CTX1;
     maxDelay = Math.max(maxDelay, dandelion.delay);
     let context = dandelion.cache.getContext('2d');
     let size = Math.min(WIDTH, HEIGHT);
+    dandelion.ctx = dandelion.blurFactor == 1 ?
+        CTX3 : dandelion.blurFactor == 2 ? CTX2 : CTX1;
     size = random(size / 24, size / 6);
     dandelion.cache.width = width;
     dandelion.cache.height = height;
@@ -140,7 +144,7 @@ function draw() {
             d.ctx.drawImage(d.cache, d.x + offx, d.y + offy);
             let frame = {
                 ctx: d.ctx,
-                img: d.ctx.getImageData(0, 0, WIDTH, HEIGHT)
+                img: d.ctx.getImageData(0, 0, MAX_SIDE, MAX_SIDE)
             };
             frames.push(frame);
         }, (i * i) / 4 * 10);
@@ -148,9 +152,9 @@ function draw() {
 }
 
 function clearAll() {
-    CTX1.clearRect(0, 0, WIDTH, HEIGHT);
-    CTX2.clearRect(0, 0, WIDTH, HEIGHT);
-    CTX3.clearRect(0, 0, WIDTH, HEIGHT);
+    CTX1.clearRect(0, 0, MAX_SIDE, MAX_SIDE);
+    CTX2.clearRect(0, 0, MAX_SIDE, MAX_SIDE);
+    CTX3.clearRect(0, 0, MAX_SIDE, MAX_SIDE);
 }
 
 init();
