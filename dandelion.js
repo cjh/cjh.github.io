@@ -4,14 +4,41 @@ const CANVAS3 = document.getElementById('dandy-3');
 const CTX1 = CANVAS1.getContext('2d');
 const CTX2 = CANVAS2.getContext('2d');
 const CTX3 = CANVAS3.getContext('2d');
-const NUM_COLORS = 5;
-const NUM_DANDELIONS = 32;
+const NUM_COLORS = 6;
 
-let WIDTH, HEIGHT, MAX_SIDE;
-let colors, maxSize, pilotx, piloty, startTime, maxDelay = 0, frames = [];
+let WIDTH, HEIGHT, MAX_SIDE, NUM_DANDELIONS = 32;
+let colors, maxSize, thatx, thaty, startTime, frames = [];
 CTX1.globalCompositeOperation = 'multiply';
 CTX2.globalCompositeOperation = 'multiply';
 CTX3.globalCompositeOperation = 'multiply';
+
+let timeout, that = null, initial = true;
+let dandelions = [];
+let count = window.localStorage.getItem('x');
+
+function clearView() {
+    if (count > 0 || NUM_DANDELIONS <= -7) {
+        return;
+    }
+    clearTimeout(timeout);
+    let button = document.getElementsByClassName('dandelions')[0];
+    let panel = document.getElementsByClassName('main-panel')[0];
+    button.style['background-color'] = 'rgba(255, 255, 255, 0.9)';
+    let shadow = window.getComputedStyle(panel).getPropertyValue('box-shadow');
+    let transition = window.getComputedStyle(panel).getPropertyValue('transition');
+    button.style['box-shadow'] = shadow;
+    button.style['transition'] = transition;
+    button.style.background = 'rgba(255, 255, 255, 0.3)';
+    panel.style.visibility = 'hidden';
+    timeout = setTimeout(function () {
+        if (NUM_DANDELIONS <= 3) {
+            return;
+        }
+        panel.style.visibility = 'visible';
+        button.style['box-shadow'] = '';
+    button.style.background = 'rgba(255, 255, 255, 0.9)';
+    }, 5000);
+}
 
 function init() {
     function revert() {
@@ -20,12 +47,16 @@ function init() {
             frame.ctx.putImageData(frame.img, 0, 0);
             setTimeout(function () {
                 revert();
-            }, 10);
+            }, 5);
         } else {
             init();
         }
     }
+    if (window.localStorage.getItem('x') > 0) {
+        return;
+    }
     if (frames.length > 0) {
+        clearView();
         revert();
         return;
     }
@@ -38,67 +69,60 @@ function init() {
     CANVAS2.height = MAX_SIDE;
     CANVAS3.width = MAX_SIDE;
     CANVAS3.height = MAX_SIDE;
-    maxDelay = 0;
     maxSize = Math.min(WIDTH, HEIGHT) / 6;
-    colors = generateRandomColors(NUM_COLORS);
     clearAll();
-    dandelions = [];
-    freshDandelion('#fa4437', 1300);
-    pilotx = random(maxSize / 2, WIDTH - maxSize / 2);
-    piloty = random(maxSize / 2, HEIGHT - maxSize / 2);
-    dandelions[0].x = pilotx;
-    dandelions[0].y = piloty;
+    if (NUM_DANDELIONS <= -7) {
+        window.localStorage.setItem('x', 10);
+        return;
+    }
+    startTime = new Date();
+    if (initial) {
+        initial = false;
+        growDandelions();
+        shuffle(dandelions);
+    }
 
+    clearAll();
+    draw();
+}
+
+function growDandelions() {
+    colors = generateRandomColors(NUM_COLORS);
+    if (that == null) {
+        freshDandelion('#fa4437');
+        that = dandelions[0];
+    } else {
+        freshDandelion(that.color, that.path);
+    }
+    thatx = random(maxSize / 2, WIDTH - maxSize / 2);
+    thaty = random(maxSize / 2, HEIGHT - maxSize / 2);
+    dandelions[0].x = thatx;
+    dandelions[0].y = thaty;
     while (dandelions.length < NUM_DANDELIONS) {
         freshDandelion();
     }
-
-    shuffle(dandelions);
-
-    startTime = new Date();
-    requestAnimationFrame(draw);
+    NUM_DANDELIONS--;
 }
 
-function drawDandy(d, context, x, y) {
-    //context.filter = 'blur(' + d.blurFactor.toString() + 'px)';
-    let rgb = hexToRgb(d.color)
-    rgb.push(1);
-    rgb = 'rgba(' + rgb.join(',') + ')';
-    console.log(rgb);
-    context.strokeStyle = rgb;
-    context.shadowBlur = 2;
-    context.shadowColor = d.color;
-    context.beginPath();
-    for (i = 0; i < d.path.length; i++) {
-        context.lineTo(x + d.path[i][0], y + d.path[i][1]);
-    }
-    context.moveTo(x, y);
-    context.lineTo(x, MAX_SIDE);
-    context.stroke();
-    context.closePath();
-}
-
-let dandelions = [];
-
-function freshDandelion(color = null, delay = null) {
+function freshDandelion(color = null, path = []) {
+    let size = null;
     if (color == null) {
         color = colors[random(0, NUM_COLORS - 1)];
-    }
-    if (delay == null) {
-        delay = random(200, 2400);
+    } else {
+        size = Math.min(WIDTH, HEIGHT);
+        size = random(size / 20, size / 16);
     }
     x = random(0, WIDTH);
     y = random(0, HEIGHT);
-    if (pilotx != null && piloty != null) {
-        while (Math.abs(x - pilotx) < maxSize && Math.abs(y - piloty) < maxSize) {
+    if (thatx != null && thaty != null) {
+        while (Math.abs(x - thatx) < maxSize && Math.abs(y - thaty) < maxSize) {
             x = random(0, WIDTH);
             y = random(0, HEIGHT);
         }
     }
-
     let width = maxSize * 3, height = HEIGHT * 2;
     dandelion = {
-        path: [],
+        path: path,
         color: color,
         blurFactor: [1, 1, 1, 2, 2, 3, 3, 3][random(0, 7)],
         x: x,
@@ -106,31 +130,57 @@ function freshDandelion(color = null, delay = null) {
         width: width,
         height: height,
         cache: document.createElement('canvas'),
-        delay: delay,
         ctx: null
     }
-    maxDelay = Math.max(maxDelay, dandelion.delay);
+    if (NUM_DANDELIONS == 1) {
+        dandelion.blurFactor = 2;
+    } else if (NUM_DANDELIONS <= 0 && NUM_DANDELIONS >= -3) {
+        dandelion.blurFactor = 1;
+    } else if (NUM_DANDELIONS == -4) {
+        dandelion.blurFactor = 2;
+    } else if (NUM_DANDELIONS == -5) {
+        dandelion.blurFactor = 3;
+    }
     let context = dandelion.cache.getContext('2d');
-    let size = Math.min(WIDTH, HEIGHT);
+    if (size == null) {
+        size = Math.min(WIDTH, HEIGHT);
+        size = random(size / 24, size / 6);
+    }
     dandelion.ctx = dandelion.blurFactor == 1 ?
         CTX3 : dandelion.blurFactor == 2 ? CTX2 : CTX1;
-    size = random(size / 24, size / 6);
     dandelion.cache.width = width;
     dandelion.cache.height = height;
-    for (i = 0; i < 200; i++) {
-        let r = size * Math.PI * Math.random(),
-            h = Math.random() + Math.random(),
-            d = h > 1 ? size - h : h,
-            s = d * Math.cos(r),
-            m = d * Math.sin(r);
-        dandelion.path.push([s, m]);
+
+    if (dandelion.path.length == 0) {
+        for (i = 0; i < 192; i++) {
+            let r = size * Math.PI * Math.random(),
+                h = Math.random() + Math.random(),
+                d = h > 1 ? size - h : h,
+                s = d * Math.cos(r),
+                m = d * Math.sin(r);
+            dandelion.path.push([s, m]);
+        }
     }
     drawDandy(dandelion, context, maxSize * 1.5, maxSize * 1.5);
     dandelions.push(dandelion);
 }
 
+function drawDandy(d, context, x, y) {
+    //context.filter = 'blur(' + d.blurFactor.toString() + 'px)';
+    context.strokeStyle = d.color;
+    context.shadowBlur = 2;
+    context.shadowColor = d.color;
+    context.beginPath();
+    for (i = 0; i < d.path.length; i++) {
+        context.lineTo(x + d.path[i][0], y + d.path[i][1]);
+    }
+    context.moveTo(x, y);
+    context.lineTo(x, HEIGHT * 2);
+    context.stroke();
+    context.closePath();
+}
+
 function draw() {
-    clearAll();
     let time = new Date();
 
     let ms = time.getTime() - startTime.getTime();
@@ -138,8 +188,9 @@ function draw() {
     let maxSize = Math.min(WIDTH, HEIGHT) / 6;
     let offx = -(maxSize * 1.5);
     let offy = -(maxSize * 1.5);
-    for (var i = 0; i < dandelions.length; i++) {
-        let d = dandelions[i];
+    let i = 0;
+    if (dandelions.length > 0) {
+        let d = dandelions.shift();
         setTimeout(function () {
             d.ctx.drawImage(d.cache, d.x + offx, d.y + offy);
             let frame = {
@@ -147,8 +198,12 @@ function draw() {
                 img: d.ctx.getImageData(0, 0, MAX_SIDE, MAX_SIDE)
             };
             frames.push(frame);
-        }, (i * i) / 4 * 10);
+        }, NUM_DANDELIONS > 0 ? 20 : 200);
+        setTimeout(draw, NUM_DANDELIONS > 0 ? 20 : 200);
+        return;
     }
+    growDandelions();
+    shuffle(dandelions);
 }
 
 function clearAll() {
@@ -157,4 +212,12 @@ function clearAll() {
     CTX3.clearRect(0, 0, MAX_SIDE, MAX_SIDE);
 }
 
+if (count > 0) {
+    window.localStorage.setItem('x', --count);
+}
+if (count < 1) {
+    window.localStorage.removeItem('x');
+}
+
 init();
+

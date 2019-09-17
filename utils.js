@@ -23,11 +23,6 @@ var generateRandomColors = (t, o = "lab", a = .175, n = 4) => {
 },
     init,
     requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
-const hexToRgb = hex =>
-  hex.replace(/^#?([a-f\d])([a-f\d])([a-f\d])$/i
-             ,(m, r, g, b) => '#' + r + r + g + g + b + b)
-    .substring(1).match(/.{2}/g)
-    .map(x => parseInt(x, 16))
 function shuffle(a) {
     var j, x, i;
     for (i = a.length - 1; i > 0; i--) {

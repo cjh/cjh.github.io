@@ -162,18 +162,25 @@ a.item {
     min-width: 0;
     min-height: 0;
     overflow: hidden;
-    padding: 10px;
+    padding: 15px;
     line-height: 26px;
     flex: auto;
-    text-align: center
+    text-align: center;
+    background-color: rgba(255, 255, 255, 0.9);
 }
 a.item:last-of-type {
-    margin-right: 10px
+    padding-right: 20px
 }
 a.item.identity {
     width: 100%;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, .12), 0 1px 2px rgba(0, 0, 0, .24);
     padding: 10px 25px
+}
+a.item.dandelions {
+    visibility: visible;
+    z-index: 11;
+}
+a.item.dandelions:active {
+    color: #777;
 }
 a {
     text-decoration: none;
@@ -182,7 +189,7 @@ a {
 }
 a.active {
   color: #777;
-    cursor: pointer;
+cursor: pointer;
 }
 a.active:hover {
     color: #000
@@ -216,9 +223,9 @@ div.main-panel {
     margin: 10px;
     flex-direction: row;
     flex-wrap: wrap;
+    max-width: 330px;
     position: relative;
     font-size: 20px;
-    background-color: #fff;
     color: #000;
     box-shadow: 0 1px 3px rgba(0, 0, 0, .12), 0 1px 2px rgba(0, 0, 0, .24);
     transition: all .3s cubic-bezier(.25, .8, .25, 1);
@@ -226,8 +233,8 @@ div.main-panel {
 }
 @media screen and (min-width:576px) {
     a.item.identity {
-        width: auto;
-        margin-right: 10px
+/*        width: auto;
+        padding-right: 35px;*/
     }
 }
 .main-panel:hover {
