@@ -137,6 +137,7 @@ canvas {
     background: #f0f8ff;
 }
 div.layers {
+    overflow: hidden;
     position: relative;
 }
 #dandy-1 {
