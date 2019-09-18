@@ -37,3 +37,17 @@ const hexToRgb = hex =>
         ,(m, r, g, b) => '#' + r + r + g + g + b + b)
     .substring(1).match(/.{2}/g)
     .map(x => parseInt(x, 16));
+const lightenHexes = (hexes, lightness) => {
+    let hsls = hexes.map(HUSL.fromHex);
+    hsls = hsls.map(function (hsl) {
+        hsl = hsl.map(Math.round);
+        hsl[2] = lightness;
+        hsl[0] = hsl[0].toString();
+        hsl[1] = hsl[1].toString() + '%';
+        hsl[2] = hsl[2].toString() + '%';
+        hsl.push('1.0')
+        return 'hsla(' + hsl.join(',') + ')';
+    });
+    return hsls;
+};
+
