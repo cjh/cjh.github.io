@@ -130,14 +130,13 @@ table {
     border-spacing: 0
 }
 canvas {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     vertical-align: top;
     background: #f0f8ff;
 }
 div.layers {
-    overflow: hidden;
     position: relative;
 }
 #dandy-1 {

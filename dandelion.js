@@ -14,7 +14,13 @@ CTX3.globalCompositeOperation = 'multiply';
 
 let timeout, that = null, initial = true;
 let dandelions = [];
-let count = window.localStorage.getItem('x');
+let count = 0, refreshTime = (new Date()).getTime();
+let storage = window.localStorage.getItem('x');
+if (storage) {
+    storage = JSON.parse(storage);
+    count = storage['count'];
+    refreshTime = storage['refreshTime'];
+}
 
 function clearView() {
     if (count > 0 || NUM_DANDELIONS <= -7) {
@@ -52,7 +58,7 @@ function init() {
             init();
         }
     }
-    if (window.localStorage.getItem('x') > 0) {
+    if (count > 0) {
         return;
     }
     if (frames.length > 0) {
@@ -72,7 +78,10 @@ function init() {
     maxSize = Math.min(WIDTH, HEIGHT) / 6;
     clearAll();
     if (NUM_DANDELIONS <= -7) {
-        window.localStorage.setItem('x', 10);
+        window.localStorage.setItem('x', JSON.stringify({
+            'count': 10,
+            'refreshTime': (new Date()).getTime()
+        }));
         return;
     }
     startTime = new Date();
@@ -108,6 +117,8 @@ function freshDandelion(color = null, path = []) {
     let size = null;
     if (color == null) {
         color = colors[random(0, NUM_COLORS - 1)];
+        //color = hexToRgb(color);
+        //color = 'rgba(' + color.join(',') + ',0.8)';
     } else {
         size = Math.min(WIDTH, HEIGHT);
         size = random(size / 20, size / 16);
@@ -152,7 +163,7 @@ function freshDandelion(color = null, path = []) {
     dandelion.cache.height = height;
 
     if (dandelion.path.length == 0) {
-        for (i = 0; i < 192; i++) {
+        for (i = 0; i < 224; i++) {
             let r = size * Math.PI * Math.random(),
                 h = Math.random() + Math.random(),
                 d = h > 1 ? size - h : h,
@@ -166,7 +177,6 @@ function freshDandelion(color = null, path = []) {
 }
 
 function drawDandy(d, context, x, y) {
-    //context.filter = 'blur(' + d.blurFactor.toString() + 'px)';
     context.strokeStyle = d.color;
     context.shadowBlur = 2;
     context.shadowColor = d.color;
@@ -213,9 +223,13 @@ function clearAll() {
 }
 
 if (count > 0) {
-    window.localStorage.setItem('x', --count);
+    window.localStorage.setItem('x', JSON.stringify({
+        'count': --count,
+        'refreshTime': refreshTime
+    }));
 }
-if (count < 1) {
+if (count < 1 || Math.abs(refreshTime -
+    (new Date()).getTime()) >= 900000) {
     window.localStorage.removeItem('x');
 }
 
