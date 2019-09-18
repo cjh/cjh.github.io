@@ -4,7 +4,7 @@ const CANVAS3 = document.getElementById('dandy-3');
 const CTX1 = CANVAS1.getContext('2d');
 const CTX2 = CANVAS2.getContext('2d');
 const CTX3 = CANVAS3.getContext('2d');
-const NUM_COLORS = 6;
+const NUM_COLORS = 3;
 
 let WIDTH, HEIGHT, MAX_SIDE, NUM_DANDELIONS = 32;
 let colors, maxSize, thatx, thaty, startTime, frames = [];

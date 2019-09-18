@@ -1,9 +1,9 @@
-function random(t, o) {
-    var a = o + 1 - t,
+const random = (t, o) => {
+    let a = o + 1 - t,
         n = Math.random() * a + t;
     return Math.floor(n)
 }
-var generateRandomColors = (t, o = "lab", a = .175, n = 4) => {
+const generateRandomColors = (t, o = "lab", a = .175, n = 4) => {
     let e = [];
     const i = Math.floor(t / n),
         r = t % n,
@@ -20,11 +20,10 @@ var generateRandomColors = (t, o = "lab", a = .175, n = 4) => {
         u = Math.min(g + 40, 95);
     for (let t = 0; t < i + r - 1; t++) e.push(HUSL.toHex(d[random(0, d.length - 1)], random(w, c), random(g, u)));
     return e.push(HUSL.toHex(d[0], s, l)), chroma.scale(e).padding(a).mode(o).colors(t)
-},
-    init,
-    requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+}
+const requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
 function shuffle(a) {
-    var j, x, i;
+    let j, x, i;
     for (i = a.length - 1; i > 0; i--) {
         j = Math.floor(Math.random() * (i + 1));
         x = a[i];
@@ -37,4 +36,4 @@ const hexToRgb = hex =>
     hex.replace(/^#?([a-f\d])([a-f\d])([a-f\d])$/i
         ,(m, r, g, b) => '#' + r + r + g + g + b + b)
     .substring(1).match(/.{2}/g)
-    .map(x => parseInt(x, 16))
+    .map(x => parseInt(x, 16));
