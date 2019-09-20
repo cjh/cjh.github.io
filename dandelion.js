@@ -1,27 +1,28 @@
 const CANVAS1 = document.getElementById('dandy-1');
 const CANVAS2 = document.getElementById('dandy-2');
-const CANVAS3 = document.getElementById('dandy-3');
 const CTX1 = CANVAS1.getContext('2d');
 const CTX2 = CANVAS2.getContext('2d');
-const CTX3 = CANVAS3.getContext('2d');
 const button = document.getElementsByClassName('dandelions')[0];
 const panel = document.getElementsByClassName('main-panel')[0];
 const items = document.getElementsByClassName('item');
+
 const NUM_COLORS = 3;
-
-const clearAll = () => [CTX1, CTX2, CTX3]
-    .forEach(ctx => ctx.clearRect(0, 0, MAX_SIDE, MAX_SIDE));
-
-let WIDTH, HEIGHT, MAX_SIDE;
-let colors, bgcolors, maxSize, thatx, thaty, interval, timeout;
 let NUM_DANDELIONS = 32;
+let WIDTH = window.innerWidth;
+let HEIGHT = window.innerHeight;
+let MAX_SIDE = Math.max(WIDTH, HEIGHT);
 let dandelions = [];
 let frames = [];
 let that = null;
 let initial = true;
 let busy = false;
+let colors, maxSize, thatx, thaty, timeout;
 
-[CTX1, CTX2, CTX3].forEach(x => x.globalCompositeOperation = 'multiply');
+[CANVAS1, CANVAS2].forEach(canvas => {
+    canvas.width = WIDTH;
+    canvas.height = HEIGHT;
+});
+
 window.addEventListener('click', e => clickAway(e));
 window.addEventListener('touchstart', e => clickAway(e));
 
@@ -46,9 +47,8 @@ function showPanel() {
     button.style['box-shadow'] = '';
     button.style.background = '';
     for (let i = 0; i < items.length; i++) {
-        if (items[i].classList.contains('dandelions')) {
+        if (items[i].classList.contains('dandelions'))
             continue;
-        }
         items[i].style.color = '';
         items[i].style.pointerEvents = '';
     }
@@ -60,9 +60,8 @@ function hidePanel() {
     panel.style.backgroundColor = 'rgba(0, 0, 0, 0)';
     panel.style.boxShadow = 'none';
     for (let i = 0; i < items.length; i++) {
-        if (items[i].classList.contains('dandelions')) {
+        if (items[i].classList.contains('dandelions'))
             continue;
-        }
         items[i].style.color = 'transparent';
         items[i].style.pointerEvents = 'none';
     }
@@ -76,7 +75,7 @@ function init(quickly = false) {
         if (frames.length > 0) {
             let frame = frames.pop();
             frame.ctx.putImageData(frame.img, 0, 0);
-            setTimeout(() => revert(), 5);
+            setTimeout(() => revert(), 10);
         } else {
             busy = false;
             init();
@@ -90,32 +89,49 @@ function init(quickly = false) {
     WIDTH = window.innerWidth;
     HEIGHT = window.innerHeight;
     MAX_SIDE = Math.max(WIDTH, HEIGHT);
-    [CANVAS1, CANVAS2, CANVAS3].forEach(canvas => {
-        canvas.width = MAX_SIDE;
-        canvas.height = MAX_SIDE;
+    [CANVAS1, CANVAS2].forEach(canvas => {
+        canvas.width = WIDTH;
+        canvas.height = HEIGHT;
     });
+    [CTX1, CTX2].forEach(ctx => frames.push({
+            ctx: ctx,
+            img: ctx.getImageData(0, 0, MAX_SIDE, MAX_SIDE)
+        }));
     maxSize = Math.min(WIDTH, HEIGHT) / 6;
-    clearAll();
-    if (NUM_DANDELIONS <= 11) return;
+    [CTX1, CTX2].forEach(ctx => ctx.clearRect(0, 0, ctx.canvas.clientWidth, ctx.canvas.clientHeight));
+    if (NUM_DANDELIONS <= -11) return;
     if (initial) {
         initial = false;
         growDandelions();
-        shuffle(dandelions);
     }
-    clearAll();
-    clearInterval(interval);
-    let backdrop = bgcolors.slice();
-    let i = 0;
-    interval = setInterval(() => {
-        let body = document.getElementsByTagName('body')[0];
-        body.style.background = backdrop[i++ % NUM_COLORS];
-    }, 3000);
+
+    dandelions.sort((a, b) => a.size - b.size);
     draw(quickly);
 }
 
+function draw(quickly = false) {
+    const render = d => {
+        drawDandy(d, d.ctx, d.x, d.y);
+        let frame = {
+            ctx: d.ctx,
+            img: d.ctx.getImageData(0, 0, MAX_SIDE, MAX_SIDE)
+        };
+        frames.push(frame);
+    };
+    while (dandelions.length > 0 && quickly)
+        render(dandelions.shift());
+    if (dandelions.length > 0) {
+        setTimeout(() => render(dandelions.shift()),
+            NUM_DANDELIONS > 0 ? 25: 200);
+        setTimeout(draw, NUM_DANDELIONS > 0 ? 25 : 200);
+    }
+    if (dandelions.length == 0) {
+        growDandelions();
+    }
+}
+
 function growDandelions() {
-    colors = generateRandomColors(NUM_COLORS);
-    bgcolors = lightenHexes(colors, 97);
+    colors = genColors(NUM_COLORS);
     if (that == null) {
         freshDandelion('#fa4437');
         that = dandelions[0];
@@ -131,91 +147,95 @@ function growDandelions() {
 
 function freshDandelion(color = null, path = []) {
     let size = null;
+    let blurFactor = null;
+    let basis = Math.max(WIDTH, HEIGHT) / 2;
     if (color == null) color = colors[random(0, NUM_COLORS - 1)]
     else {
-        size = Math.min(WIDTH, HEIGHT);
-        size = random(size / 20, size / 16);
+        size = random(basis / 12, basis / 11);
+        blurFactor = 1;
     }
-    x = random(0, WIDTH), y = random(0, HEIGHT);
+    let x = random(0, WIDTH);
+    let y = random(0, HEIGHT);
     if (thatx != null && thaty != null) {
         while (Math.abs(x - thatx) < maxSize &&
             Math.abs(y - thaty) < maxSize) {
             x = random(0, WIDTH), y = random(0, HEIGHT);
         }
     }
-    let width = maxSize * 3, height = HEIGHT * 2;
+    let width = maxSize * 3;
+    let height = HEIGHT * 2;
     dandelion = {
         path: path,
         color: color,
-        blurFactor: [1, 1, 1, 2, 2, 3, 3, 3][random(0, 7)],
+        blurFactor: blurFactor,
         x: x,
         y: y,
-        width: width,
-        height: height,
-        cache: document.createElement('canvas'),
-        ctx: null
+        ctx: null,
+        size: size
     }
-    if (NUM_DANDELIONS <= 1) dandelion.blurFactor = 1;
-    if (size == null) {
-        size = Math.min(WIDTH, HEIGHT);
-        size = random(size / 24, size / 6);
-    }
-    dandelion.ctx = dandelion.blurFactor == 1 ?
-        CTX3 : dandelion.blurFactor == 2 ? CTX2 : CTX1;
-    dandelion.cache.width = width;
-    dandelion.cache.height = height;
+    if (size == null)
+        size = random(basis / 20, basis / 6);
+    dandelion.size = size;
+    if (blurFactor == null)
+        dandelion.blurFactor = size > (basis / 9) ? 1 : 2;
 
-    if (dandelion.path.length == 0) {
-        for (let i = 0; i < 224; i++) {
-            let r = size * Math.PI * Math.random(),
-                h = Math.random() + Math.random(),
-                d = h > 1 ? size - h : h,
-                s = d * Math.cos(r),
-                m = d * Math.sin(r);
-            dandelion.path.push([s, m]);
-        }
-    }
-    drawDandy(dandelion, dandelion.cache.getContext('2d'),
-        maxSize * 1.5, maxSize * 1.5);
+    if (NUM_DANDELIONS <= 1) dandelion.blurFactor = 1;
+    dandelion.ctx = dandelion.blurFactor == 1 ?
+        CTX2 : CTX1;
+
     dandelions.push(dandelion);
 }
 
 function drawDandy(d, context, x, y) {
-    context.strokeStyle = d.color;
-    context.shadowBlur = 2;
+    context.lineCap = 'round';
+    context.lineJoin = 'round';
     context.shadowColor = d.color;
     context.beginPath();
-    for (i = 0; i < d.path.length; i++)
-        context.lineTo(x + d.path[i][0], y + d.path[i][1]);
-    context.moveTo(x, y);
-    context.lineTo(x, HEIGHT * 2);
+    let rx;
+    let ry;
+    let stemcount = random(64, 96);
+    for (let i = 0; i < stemcount; i++) {
+        let angle = Math.random() * Math.PI * 2;
+        let rr = Math.random();
+        rx = x + Math.cos(angle) * d.size * rr;
+        ry = y + Math.sin(angle) * d.size * rr;
+        context.lineTo(rx, ry);
+        context.moveTo(x, y);
+    }
+    context.strokeStyle = d.color;
+    context.shadowBlur = 2;
+    context.lineWidth = d.blurFactor / 6;
+    context.stroke();
+    context.moveTo(rx, ry);
+
+    for (let i = 0; i < 256 - stemcount; i++) {
+        let angle = Math.random() * Math.PI * 2;
+        let px = rx;
+        let py = ry;
+        rx = x + Math.cos(angle) * d.size;
+        ry = y + Math.sin(angle) * d.size;
+        let a = px - rx;
+        let b = py - ry;
+        let c = Math.sqrt(a * a + b * b);
+        if (random(0, d.size * 2) < c || c < d.size * 0.4) {
+            i--;
+            continue;
+        }
+        context.lineTo(rx, ry);
+    }
+    context.shadowBlur = 4;
+    context.strokeStyle = d.color;
+    context.lineWidth = d.blurFactor / 8;
     context.stroke();
     context.closePath();
-}
 
-function draw(quickly = false) {
-    let maxSize = Math.min(WIDTH, HEIGHT) / 6;
-    let offx = -(maxSize * 1.5);
-    let offy = -(maxSize * 1.5);
-    const render = d => {
-        d.ctx.drawImage(d.cache, d.x + offx, d.y + offy);
-        let frame = {
-            ctx: d.ctx,
-            img: d.ctx.getImageData(0, 0, MAX_SIDE, MAX_SIDE)
-        };
-        frames.push(frame);
-    };
-    while (dandelions.length > 0 && quickly)
-        render(dandelions.shift());
-    if (dandelions.length > 0) {
-        setTimeout(() => render(dandelions.shift()),
-            NUM_DANDELIONS > 0 ? 20 : 200);
-        setTimeout(draw, NUM_DANDELIONS > 0 ? 20 : 200);
-    }
-    if (dandelions.length == 0) {
-        growDandelions();
-        shuffle(dandelions);
-    }
+    context.beginPath();
+    context.shadowBlur = 2;
+    context.lineWidth = d.blurFactor;
+    context.moveTo(x, y);
+    context.lineTo(x, HEIGHT);
+    context.stroke();
+    context.closePath();
 }
 
 init(true);
