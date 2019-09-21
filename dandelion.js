@@ -24,7 +24,7 @@ let colors, maxSize, thatx, thaty, timeout;
 });
 
 window.addEventListener('click', e => clickAway(e));
-window.addEventListener('touchstart', e => clickAway(e));
+window.addEventListener('touchend', e => clickAway(e));
 
 function clickAway(e) {
     if (!button.contains(e.target))
